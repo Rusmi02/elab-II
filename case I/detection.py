@@ -1,6 +1,7 @@
 import csv
 import random
 import numpy as np
+import pandas as pd
 from project import DataMiner
 from scipy import stats
 from sklearn.metrics import pairwise_distances_argmin_min
@@ -38,20 +39,51 @@ class FraudDetector:
     def detect_fraud(self, test_transactions, transaction_ids, score_threshold):
         flagged_transactions = []
 
+        prediction_department_counts = {department: [] for department in range(1, 19)}
+        for idx, transaction in zip(transaction_ids, test_transactions):
+            visit_count = {department: 0 for department in range(1, 19)}
+            for department, _, _ in transaction:
+                department = int(department)
+                visit_count[department] += 1
+            for department, count in visit_count.items():
+                prediction_department_counts[department].append(count)
+
+        prediction_department_df = pd.DataFrame(
+            prediction_department_counts, index=transaction_ids
+        )
+
+        cluster_1_ids = data_miner.department_clusters(prediction_department_df)
+        print("TRANSACTIONS THAT BELONG TO CLUSTER 1")
+        if len(cluster_1_ids) < 150:
+            print(f"{len(cluster_1_ids)}")
+            for transaction_id in cluster_1_ids:
+                transaction_number = transaction_id.split()[1]
+                print(f"{transaction_number}")
+        elif len(cluster_1_ids) > 150:
+            random_selected_transactions = random.sample(cluster_1_ids, 150)
+            print(f"{len(random_selected_transactions)} / {len(cluster_1_ids)}")
+            for transaction_id in random_selected_transactions:
+                transaction_number = transaction_id.split()[1]
+                print(f"{transaction_number}")
+
         # MINE ASSOCIATION RULES
-        sorted_rules = data_miner.mine_association_rules(support=0.33, lift=1.3)
+        sorted_rules = data_miner.mine_association_rules(support=0.2, lift=1.5)
         print(sorted_rules)
         # MINE SEQUENTIAL RULES
-        frequent_sequences = data_miner.mine_sequential_rules(threshold=450)
+        frequent_sequences = data_miner.mine_sequential_rules(threshold=460)
         print(frequent_sequences)
         # FIND TIME OUTLIERS
-        time_bounds, time_cluster_centroids, time_threshold = data_miner.find_time_outliers(
-            lower_percentile=5, upper_percentile=95, k=4, threshold_percentile=75
+        time_bounds, time_cluster_centroids, time_threshold = (
+            data_miner.find_time_outliers(
+                lower_percentile=5, upper_percentile=95, k=4, threshold_percentile=83.5
+            )
         )
         print(time_bounds)
         print(time_cluster_centroids)
         # FIND PRICE OUTLIERS
-        price_cluster_centroids, price_threshold = data_miner.find_price_outliers(k=4, threshold_percentile=75)
+        price_cluster_centroids, price_threshold = data_miner.find_price_outliers(
+            k=4, threshold_percentile=83.5
+        )
         print(price_cluster_centroids)
 
         total_ar_score = 0
@@ -70,8 +102,8 @@ class FraudDetector:
                 if antecedent.issubset(
                     set(item[0] for item in transaction)
                 ) and not consequent.issubset(set(item[0] for item in transaction)):
-                    fraud_score += 0.0
-                    total_ar_score += 0.0
+                    fraud_score += 1.0
+                    total_ar_score += 1.0
                     break
 
             # CHECK SEQUENTIAL RULES (decrease in threshold = less flagged transactions)
@@ -100,7 +132,7 @@ class FraudDetector:
             if count_time_exceeded > 2:
                 fraud_score += 0.0
                 total_time_score += 0.0
-            
+
             # CHECK TOTAL TIME SPENT AND TOTAL ITEMS OUTLIERS (stricter bounds = less flagged transactions)
             total_time_spent = sum(time for _, time, _ in transaction)
             total_items = 0
@@ -226,7 +258,7 @@ if __name__ == "__main__":
     fraud_detector = FraudDetector(data_miner)
 
     test_transactions, transaction_ids = fraud_detector.load_transactions(
-        "case I/case34.csv"
+        "case I/case45.csv"
     )
     (
         flagged_transactions,
