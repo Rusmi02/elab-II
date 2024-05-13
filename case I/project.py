@@ -27,7 +27,11 @@ class DataMiner:
                 if item and len(item.split()) == 3:
                     department, time, price = item.split()
                     if index not in transactions:
-                        transactions[index] = {"departments": [], "times": [], "prices": []}
+                        transactions[index] = {
+                            "departments": [],
+                            "times": [],
+                            "prices": [],
+                        }
                     if department not in departments:
                         departments[department] = {"times": [], "prices": []}
 
@@ -39,7 +43,7 @@ class DataMiner:
                     departments[department]["prices"].append(float(price))
 
         return transactions, departments
-    
+
     def load_extra(self, test_file):
         with open(test_file, "r", newline="") as csvfile:
             reader = csv.reader(csvfile)
@@ -53,7 +57,11 @@ class DataMiner:
                 if item and len(item.split()) == 3:
                     department, time, price = item.split()
                     if index not in transactions:
-                        transactions[index] = {"departments": [], "times": [], "prices": []}
+                        transactions[index] = {
+                            "departments": [],
+                            "times": [],
+                            "prices": [],
+                        }
                     if department not in departments:
                         departments[department] = {"times": [], "prices": []}
 
@@ -117,7 +125,9 @@ class DataMiner:
 
         return filtered_sequences
 
-    def find_time_outliers(self, lower_percentile, upper_percentile, k, threshold_percentile):
+    def find_time_outliers(
+        self, lower_percentile, upper_percentile, k, threshold_percentile
+    ):
         transactions, departments = self.load_data()
         time_bounds = {}
         total_time_spent = {}
@@ -131,16 +141,21 @@ class DataMiner:
             upper_bound = float(np.percentile(time, upper_percentile))
 
             time_bounds[department] = (lower_bound, upper_bound)
-        
+
         for transaction, data in transactions.items():
             departments = data["departments"]
             price_values = data["times"]
             total_time_spent[transaction] = sum(price_values)
             total_items[transaction] = len(departments)
 
-        X = np.array([[total_time_spent[transaction], total_items[transaction]] for transaction in transactions])
+        X = np.array(
+            [
+                [total_time_spent[transaction], total_items[transaction]]
+                for transaction in transactions
+            ]
+        )
 
-        kmeans = KMeans(n_clusters = k, random_state=1)
+        kmeans = KMeans(n_clusters=k, random_state=1)
         kmeans.fit(X)
 
         cluster_labels = kmeans.labels_
@@ -159,11 +174,24 @@ class DataMiner:
 
         plt.figure(figsize=(10, 6))
         for label, transactions in clusters.items():
-            plt.scatter([total_time_spent[t] for t in transactions], [total_items[t] for t in transactions], label=f'Cluster {label}', alpha=0.5)
-        plt.scatter(cluster_centroids[:, 0], cluster_centroids[:, 1], s=300, c='red', marker='X', edgecolors='black', label='Centroids')
-        plt.title('Clusters and Centroids')
-        plt.xlabel('Total Time Spent')
-        plt.ylabel('Total Items')
+            plt.scatter(
+                [total_time_spent[t] for t in transactions],
+                [total_items[t] for t in transactions],
+                label=f"Cluster {label}",
+                alpha=0.5,
+            )
+        plt.scatter(
+            cluster_centroids[:, 0],
+            cluster_centroids[:, 1],
+            s=300,
+            c="red",
+            marker="X",
+            edgecolors="black",
+            label="Centroids",
+        )
+        plt.title("Clusters and Centroids")
+        plt.xlabel("Total Time Spent")
+        plt.ylabel("Total Items")
         plt.legend()
         plt.grid(True)
 
@@ -183,9 +211,14 @@ class DataMiner:
             total_price_spent[transaction] = sum(price_values)
             total_items[transaction] = len(departments)
 
-        X = np.array([[total_price_spent[transaction], total_items[transaction]] for transaction in transactions])
+        X = np.array(
+            [
+                [total_price_spent[transaction], total_items[transaction]]
+                for transaction in transactions
+            ]
+        )
 
-        kmeans = KMeans(n_clusters = k, random_state=1)
+        kmeans = KMeans(n_clusters=k, random_state=1)
         kmeans.fit(X)
 
         cluster_labels = kmeans.labels_
@@ -204,21 +237,36 @@ class DataMiner:
 
         plt.figure(figsize=(10, 6))
         for label, transactions in clusters.items():
-            plt.scatter([total_price_spent[t] for t in transactions], [total_items[t] for t in transactions], label=f'Cluster {label}', alpha=0.5)
-        plt.scatter(cluster_centroids[:, 0], cluster_centroids[:, 1], s=300, c='red', marker='X', edgecolors='black', label='Centroids')
-        plt.title('Clusters and Centroids')
-        plt.xlabel('Total Price Spent')
-        plt.ylabel('Total Items')
+            plt.scatter(
+                [total_price_spent[t] for t in transactions],
+                [total_items[t] for t in transactions],
+                label=f"Cluster {label}",
+                alpha=0.5,
+            )
+        plt.scatter(
+            cluster_centroids[:, 0],
+            cluster_centroids[:, 1],
+            s=300,
+            c="red",
+            marker="X",
+            edgecolors="black",
+            label="Centroids",
+        )
+        plt.title("Clusters and Centroids")
+        plt.xlabel("Total Price Spent")
+        plt.ylabel("Total Items")
         plt.legend()
         plt.grid(True)
 
         print("Price centroids determined.")
-    
+
         return cluster_centroids, threshold
-    
+
     def department_clusters(self, predict_department_df):
         training_transactions, training_departments = self.load_data()
-        test_transactions, test_departments = self.load_extra("case I/supermarket_extra.csv")
+        test_transactions, test_departments = self.load_extra(
+            "case I/supermarket_extra.csv"
+        )
         labels_df = pd.read_csv("case I/supermarket_extra_labels.csv", header=None)
 
         training_department_counts = {department: [] for department in range(1, 19)}
@@ -246,13 +294,13 @@ class DataMiner:
         test_department_df = pd.DataFrame(test_department_counts)
 
         merged_df = pd.concat([test_department_df, labels_df], axis=1)
-        merged_df.rename(columns={0: 'Amount_Stolen'}, inplace=True)
-        
-        non_fraud_df = merged_df[merged_df['Amount_Stolen'] == 0].copy()
-        fraud_df = merged_df[merged_df['Amount_Stolen'] > 0].copy()
+        merged_df.rename(columns={0: "Amount_Stolen"}, inplace=True)
 
-        non_fraud_df.drop(columns=['Amount_Stolen'], inplace=True)
-        fraud_df.drop(columns=['Amount_Stolen'], inplace=True)
+        non_fraud_df = merged_df[merged_df["Amount_Stolen"] == 0].copy()
+        fraud_df = merged_df[merged_df["Amount_Stolen"] > 0].copy()
+
+        non_fraud_df.drop(columns=["Amount_Stolen"], inplace=True)
+        fraud_df.drop(columns=["Amount_Stolen"], inplace=True)
 
         cluster_range = range(1, 11)
         inertias = []
@@ -263,10 +311,10 @@ class DataMiner:
 
             inertias.append(kmeans.inertia_)
 
-        plt.plot(cluster_range, inertias, marker='o')
-        plt.title('Elbow Method for Optimal K')
-        plt.xlabel('Number of Clusters')
-        plt.ylabel('Inertia')
+        plt.plot(cluster_range, inertias, marker="o")
+        plt.title("Elbow Method for Optimal K")
+        plt.xlabel("Number of Clusters")
+        plt.ylabel("Inertia")
         plt.xticks(cluster_range)
         plt.grid(True)
         plt.show()
@@ -274,53 +322,309 @@ class DataMiner:
         kmeans = KMeans(n_clusters=4, random_state=1)
         cluster_labels = kmeans.fit_predict(training_department_df)
 
-        training_department_df['Cluster'] = cluster_labels
+        training_department_df["Cluster"] = cluster_labels
 
-        cluster_range = range(1, 11)  # You can adjust this range as needed
-
-        cluster_range = range(1, 11)  # You can adjust this range as needed
-
-        training_cluster_counts = training_department_df['Cluster'].value_counts().sort_index()
+        training_cluster_counts = (
+            training_department_df["Cluster"].value_counts().sort_index()
+        )
 
         plt.figure(figsize=(8, 6))
-        plt.bar(training_cluster_counts.index, training_cluster_counts.values, color='orange')
-        plt.title('Distribution of Transactions among Training Data Clusters')
-        plt.xlabel('Cluster')
-        plt.ylabel('Number of Transactions')
+        plt.bar(
+            training_cluster_counts.index,
+            training_cluster_counts.values,
+            color="orange",
+        )
+        plt.title("Distribution of Transactions among Training Data Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
         plt.xticks(training_cluster_counts.index)
-        plt.grid(axis='y', linestyle='--', alpha=0.7)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
         plt.show()
 
         non_fraud_cluster_labels = kmeans.predict(non_fraud_df)
-        non_fraud_df['Predicted_Cluster'] = non_fraud_cluster_labels
-        non_fraud_cluster_counts = non_fraud_df['Predicted_Cluster'].value_counts().sort_index()
+        non_fraud_df["Predicted_Cluster"] = non_fraud_cluster_labels
+        non_fraud_cluster_counts = (
+            non_fraud_df["Predicted_Cluster"].value_counts().sort_index()
+        )
 
         plt.figure(figsize=(8, 6))
-        plt.bar(non_fraud_cluster_counts.index, non_fraud_cluster_counts.values, color='orange')
-        plt.title('Distribution of Transactions among Non-Fraud Clusters')
-        plt.xlabel('Cluster')
-        plt.ylabel('Number of Transactions')
+        plt.bar(
+            non_fraud_cluster_counts.index,
+            non_fraud_cluster_counts.values,
+            color="orange",
+        )
+        plt.title("Distribution of Transactions among Non-Fraud Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
         plt.xticks(non_fraud_cluster_counts.index)
-        plt.grid(axis='y', linestyle='--', alpha=0.7)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
         plt.show()
 
         fraud_cluster_labels = kmeans.predict(fraud_df)
-        fraud_df['Predicted_Cluster'] = fraud_cluster_labels
-        fraud_cluster_counts = fraud_df['Predicted_Cluster'].value_counts().sort_index()
+        fraud_df["Predicted_Cluster"] = fraud_cluster_labels
+        fraud_cluster_counts = fraud_df["Predicted_Cluster"].value_counts().sort_index()
 
         plt.figure(figsize=(8, 6))
-        plt.bar(fraud_cluster_counts.index, fraud_cluster_counts.values, color='orange')
-        plt.title('Distribution of Transactions among Fraud Clusters')
-        plt.xlabel('Cluster')
-        plt.ylabel('Number of Transactions')
+        plt.bar(fraud_cluster_counts.index, fraud_cluster_counts.values, color="orange")
+        plt.title("Distribution of Transactions among Fraud Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
         plt.xticks(fraud_cluster_counts.index)
-        plt.grid(axis='y', linestyle='--', alpha=0.7)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
         plt.show()
 
         predict_cluster_labels = kmeans.predict(predict_department_df)
-        predict_department_df['Predicted_Cluster'] = predict_cluster_labels
+        predict_department_df["Predicted_Cluster"] = predict_cluster_labels
 
-        cluster_1_transactions = predict_department_df[predict_department_df['Predicted_Cluster'] == 1]
-        cluster_1_transaction_ids = cluster_1_transactions.index.tolist()
+        fraud_cluster_transactions = predict_department_df[
+            predict_department_df["Predicted_Cluster"] == 1
+        ]
+        fraud_cluster_transaction_ids = fraud_cluster_transactions.index.tolist()
 
-        return cluster_1_transaction_ids
+        return fraud_cluster_transaction_ids
+
+    def time_clusters(self, predict_department_df):
+        training_transactions, training_departments = self.load_data()
+        test_transactions, test_departments = self.load_extra(
+            "case I/supermarket_extra.csv"
+        )
+        labels_df = pd.read_csv("case I/supermarket_extra_labels.csv", header=None)
+
+        training_department_times = {department: [] for department in range(1, 19)}
+        for transaction, data in training_transactions.items():
+            departments_visited = data["departments"]
+            times_spent = data["times"]
+            time_spent_per_department = {department: 0 for department in range(1, 19)}
+            for department, time_spent in zip(departments_visited, times_spent):
+                department = int(department)
+                time_spent_per_department[department] += time_spent
+            for department, time_spent in time_spent_per_department.items():
+                training_department_times[department].append(time_spent)
+
+        training_department_times_df = pd.DataFrame(training_department_times)
+
+        test_department_times = {department: [] for department in range(1, 19)}
+        for transaction, data in test_transactions.items():
+            departments_visited = data["departments"]
+            times_spent = data["times"]
+            time_spent_per_department = {department: 0 for department in range(1, 19)}
+            for department, time_spent in zip(departments_visited, times_spent):
+                department = int(department)
+                time_spent_per_department[department] += time_spent
+            for department, time_spent in time_spent_per_department.items():
+                test_department_times[department].append(time_spent)
+
+        test_department_times_df = pd.DataFrame(test_department_times)
+
+        merged_df = pd.concat([test_department_times_df, labels_df], axis=1)
+        merged_df.rename(columns={0: "Amount_Stolen"}, inplace=True)
+
+        non_fraud_df = merged_df[merged_df["Amount_Stolen"] == 0].copy()
+        fraud_df = merged_df[merged_df["Amount_Stolen"] > 0].copy()
+
+        non_fraud_df.drop(columns=["Amount_Stolen"], inplace=True)
+        fraud_df.drop(columns=["Amount_Stolen"], inplace=True)
+
+        cluster_range = range(1, 11)
+        inertias = []
+
+        for n_clusters in cluster_range:
+            kmeans = KMeans(n_clusters=n_clusters, random_state=1)
+            kmeans.fit(training_department_times_df)
+
+            inertias.append(kmeans.inertia_)
+
+        plt.plot(cluster_range, inertias, marker="o")
+        plt.title("Elbow Method for Optimal K")
+        plt.xlabel("Number of Clusters")
+        plt.ylabel("Inertia")
+        plt.xticks(cluster_range)
+        plt.grid(True)
+        plt.show()
+
+        kmeans = KMeans(n_clusters=5, random_state=1)
+        cluster_labels = kmeans.fit_predict(training_department_times_df)
+
+        training_department_times_df["Cluster"] = cluster_labels
+
+        training_cluster_counts = (
+            training_department_times_df["Cluster"].value_counts().sort_index()
+        )
+
+        plt.figure(figsize=(8, 6))
+        plt.bar(
+            training_cluster_counts.index,
+            training_cluster_counts.values,
+            color="orange",
+        )
+        plt.title("Distribution of Transactions among Training Data Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
+        plt.xticks(training_cluster_counts.index)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
+        plt.show()
+
+        non_fraud_cluster_labels = kmeans.predict(non_fraud_df)
+        non_fraud_df["Predicted_Cluster"] = non_fraud_cluster_labels
+        non_fraud_cluster_counts = (
+            non_fraud_df["Predicted_Cluster"].value_counts().sort_index()
+        )
+
+        plt.figure(figsize=(8, 6))
+        plt.bar(
+            non_fraud_cluster_counts.index,
+            non_fraud_cluster_counts.values,
+            color="orange",
+        )
+        plt.title("Distribution of Transactions among Non-Fraud Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
+        plt.xticks(non_fraud_cluster_counts.index)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
+        plt.show()
+
+        fraud_cluster_labels = kmeans.predict(fraud_df)
+        fraud_df["Predicted_Cluster"] = fraud_cluster_labels
+        fraud_cluster_counts = fraud_df["Predicted_Cluster"].value_counts().sort_index()
+
+        plt.figure(figsize=(8, 6))
+        plt.bar(fraud_cluster_counts.index, fraud_cluster_counts.values, color="orange")
+        plt.title("Distribution of Transactions among Fraud Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
+        plt.xticks(fraud_cluster_counts.index)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
+        plt.show()
+
+        predict_cluster_labels = kmeans.predict(predict_department_df)
+        predict_department_df["Predicted_Cluster"] = predict_cluster_labels
+
+        fraud_cluster_transactions = predict_department_df[
+            predict_department_df["Predicted_Cluster"] == 1
+        ]
+        fraud_cluster_transaction_ids = fraud_cluster_transactions.index.tolist()
+
+        return fraud_cluster_transaction_ids
+
+    def spending_clusters(self, predict_department_df):
+        training_transactions, training_departments = self.load_data()
+        test_transactions, test_departments = self.load_extra(
+            "case I/supermarket_extra.csv"
+        )
+        labels_df = pd.read_csv("case I/supermarket_extra_labels.csv", header=None)
+
+        training_department_spendings = {department: [] for department in range(1, 19)}
+        for transaction, data in training_transactions.items():
+            departments_visited = data["departments"]
+            money_spent = data["prices"]
+            money_spent_per_department = {department: 0 for department in range(1, 19)}
+            for department, money_spent in zip(departments_visited, money_spent):
+                department = int(department)
+                money_spent_per_department[department] += money_spent
+            for department, money_spent in money_spent_per_department.items():
+                training_department_spendings[department].append(money_spent)
+
+        training_department_spendings_df = pd.DataFrame(training_department_spendings)
+
+        test_department_spendings = {department: [] for department in range(1, 19)}
+        for transaction, data in test_transactions.items():
+            departments_visited = data["departments"]
+            money_spent = data["prices"]
+            money_spent_per_department = {department: 0 for department in range(1, 19)}
+            for department, money_spent in zip(departments_visited, money_spent):
+                department = int(department)
+                money_spent_per_department[department] += money_spent
+            for department, money_spent in money_spent_per_department.items():
+                test_department_spendings[department].append(money_spent)
+
+        test_department_spendings_df = pd.DataFrame(test_department_spendings)
+
+        merged_df = pd.concat([test_department_spendings_df, labels_df], axis=1)
+        merged_df.rename(columns={0: "Amount_Stolen"}, inplace=True)
+
+        non_fraud_df = merged_df[merged_df["Amount_Stolen"] == 0].copy()
+        fraud_df = merged_df[merged_df["Amount_Stolen"] > 0].copy()
+
+        non_fraud_df.drop(columns=["Amount_Stolen"], inplace=True)
+        fraud_df.drop(columns=["Amount_Stolen"], inplace=True)
+
+        cluster_range = range(1, 11)
+        inertias = []
+
+        for n_clusters in cluster_range:
+            kmeans = KMeans(n_clusters=n_clusters, random_state=1)
+            kmeans.fit(training_department_spendings_df)
+
+            inertias.append(kmeans.inertia_)
+
+        plt.plot(cluster_range, inertias, marker="o")
+        plt.title("Elbow Method for Optimal K")
+        plt.xlabel("Number of Clusters")
+        plt.ylabel("Inertia")
+        plt.xticks(cluster_range)
+        plt.grid(True)
+        plt.show()
+
+        kmeans = KMeans(n_clusters=6, random_state=1)
+        cluster_labels = kmeans.fit_predict(training_department_spendings_df)
+
+        training_department_spendings_df["Cluster"] = cluster_labels
+
+        training_cluster_counts = (
+            training_department_spendings_df["Cluster"].value_counts().sort_index()
+        )
+
+        plt.figure(figsize=(8, 6))
+        plt.bar(
+            training_cluster_counts.index,
+            training_cluster_counts.values,
+            color="orange",
+        )
+        plt.title("Distribution of Transactions among Training Data Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
+        plt.xticks(training_cluster_counts.index)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
+        plt.show()
+
+        non_fraud_cluster_labels = kmeans.predict(non_fraud_df)
+        non_fraud_df["Predicted_Cluster"] = non_fraud_cluster_labels
+        non_fraud_cluster_counts = (
+            non_fraud_df["Predicted_Cluster"].value_counts().sort_index()
+        )
+
+        plt.figure(figsize=(8, 6))
+        plt.bar(
+            non_fraud_cluster_counts.index,
+            non_fraud_cluster_counts.values,
+            color="orange",
+        )
+        plt.title("Distribution of Transactions among Non-Fraud Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
+        plt.xticks(non_fraud_cluster_counts.index)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
+        plt.show()
+
+        fraud_cluster_labels = kmeans.predict(fraud_df)
+        fraud_df["Predicted_Cluster"] = fraud_cluster_labels
+        fraud_cluster_counts = fraud_df["Predicted_Cluster"].value_counts().sort_index()
+
+        plt.figure(figsize=(8, 6))
+        plt.bar(fraud_cluster_counts.index, fraud_cluster_counts.values, color="orange")
+        plt.title("Distribution of Transactions among Fraud Clusters")
+        plt.xlabel("Cluster")
+        plt.ylabel("Number of Transactions")
+        plt.xticks(fraud_cluster_counts.index)
+        plt.grid(axis="y", linestyle="--", alpha=0.7)
+        plt.show()
+
+        predict_cluster_labels = kmeans.predict(predict_department_df)
+        predict_department_df["Predicted_Cluster"] = predict_cluster_labels
+
+        fraud_cluster_transactions = predict_department_df[
+            predict_department_df["Predicted_Cluster"] == 1
+        ]
+        fraud_cluster_transaction_ids = fraud_cluster_transactions.index.tolist()
+
+        return fraud_cluster_transaction_ids
