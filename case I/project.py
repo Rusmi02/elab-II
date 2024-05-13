@@ -312,16 +312,15 @@ class DataMiner:
             inertias.append(kmeans.inertia_)
 
         plt.plot(cluster_range, inertias, marker="o")
-        plt.title("Elbow Method for Optimal K")
+        plt.title("Elbow Method for Optimal K (Before Median)")
         plt.xlabel("Number of Clusters")
         plt.ylabel("Inertia")
         plt.xticks(cluster_range)
         plt.grid(True)
-        plt.show()
+        # plt.show()
 
-        kmeans = KMeans(n_clusters=4, random_state=1)
+        kmeans = KMeans(n_clusters=6, random_state=1)
         cluster_labels = kmeans.fit_predict(training_department_df)
-
         training_department_df["Cluster"] = cluster_labels
 
         training_cluster_counts = (
@@ -339,13 +338,15 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(training_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         non_fraud_cluster_labels = kmeans.predict(non_fraud_df)
         non_fraud_df["Predicted_Cluster"] = non_fraud_cluster_labels
         non_fraud_cluster_counts = (
             non_fraud_df["Predicted_Cluster"].value_counts().sort_index()
         )
+
+        print(non_fraud_cluster_counts / non_fraud_cluster_counts.sum())
 
         plt.figure(figsize=(8, 6))
         plt.bar(
@@ -358,11 +359,13 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(non_fraud_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         fraud_cluster_labels = kmeans.predict(fraud_df)
         fraud_df["Predicted_Cluster"] = fraud_cluster_labels
         fraud_cluster_counts = fraud_df["Predicted_Cluster"].value_counts().sort_index()
+
+        print(fraud_cluster_counts / fraud_cluster_counts.sum())
 
         plt.figure(figsize=(8, 6))
         plt.bar(fraud_cluster_counts.index, fraud_cluster_counts.values, color="orange")
@@ -371,7 +374,7 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(fraud_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         predict_cluster_labels = kmeans.predict(predict_department_df)
         predict_department_df["Predicted_Cluster"] = predict_cluster_labels
@@ -435,16 +438,15 @@ class DataMiner:
             inertias.append(kmeans.inertia_)
 
         plt.plot(cluster_range, inertias, marker="o")
-        plt.title("Elbow Method for Optimal K")
+        plt.title("Elbow Method for Optimal K (Before Median)")
         plt.xlabel("Number of Clusters")
         plt.ylabel("Inertia")
         plt.xticks(cluster_range)
         plt.grid(True)
-        plt.show()
+        # plt.show()
 
-        kmeans = KMeans(n_clusters=5, random_state=1)
+        kmeans = KMeans(n_clusters=6, random_state=1)
         cluster_labels = kmeans.fit_predict(training_department_times_df)
-
         training_department_times_df["Cluster"] = cluster_labels
 
         training_cluster_counts = (
@@ -462,13 +464,15 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(training_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         non_fraud_cluster_labels = kmeans.predict(non_fraud_df)
         non_fraud_df["Predicted_Cluster"] = non_fraud_cluster_labels
         non_fraud_cluster_counts = (
             non_fraud_df["Predicted_Cluster"].value_counts().sort_index()
         )
+
+        print(non_fraud_cluster_counts / non_fraud_cluster_counts.sum())
 
         plt.figure(figsize=(8, 6))
         plt.bar(
@@ -481,11 +485,13 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(non_fraud_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         fraud_cluster_labels = kmeans.predict(fraud_df)
         fraud_df["Predicted_Cluster"] = fraud_cluster_labels
         fraud_cluster_counts = fraud_df["Predicted_Cluster"].value_counts().sort_index()
+
+        print(fraud_cluster_counts / fraud_cluster_counts.sum())
 
         plt.figure(figsize=(8, 6))
         plt.bar(fraud_cluster_counts.index, fraud_cluster_counts.values, color="orange")
@@ -494,7 +500,7 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(fraud_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         predict_cluster_labels = kmeans.predict(predict_department_df)
         predict_department_df["Predicted_Cluster"] = predict_cluster_labels
@@ -558,16 +564,15 @@ class DataMiner:
             inertias.append(kmeans.inertia_)
 
         plt.plot(cluster_range, inertias, marker="o")
-        plt.title("Elbow Method for Optimal K")
+        plt.title("Elbow Method for Optimal K (Before Median)")
         plt.xlabel("Number of Clusters")
         plt.ylabel("Inertia")
         plt.xticks(cluster_range)
         plt.grid(True)
-        plt.show()
+        # plt.show()
 
         kmeans = KMeans(n_clusters=6, random_state=1)
         cluster_labels = kmeans.fit_predict(training_department_spendings_df)
-
         training_department_spendings_df["Cluster"] = cluster_labels
 
         training_cluster_counts = (
@@ -585,13 +590,15 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(training_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         non_fraud_cluster_labels = kmeans.predict(non_fraud_df)
         non_fraud_df["Predicted_Cluster"] = non_fraud_cluster_labels
         non_fraud_cluster_counts = (
             non_fraud_df["Predicted_Cluster"].value_counts().sort_index()
         )
+
+        print(non_fraud_cluster_counts / non_fraud_cluster_counts.sum())
 
         plt.figure(figsize=(8, 6))
         plt.bar(
@@ -604,11 +611,13 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(non_fraud_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         fraud_cluster_labels = kmeans.predict(fraud_df)
         fraud_df["Predicted_Cluster"] = fraud_cluster_labels
         fraud_cluster_counts = fraud_df["Predicted_Cluster"].value_counts().sort_index()
+
+        print(fraud_cluster_counts / fraud_cluster_counts.sum())
 
         plt.figure(figsize=(8, 6))
         plt.bar(fraud_cluster_counts.index, fraud_cluster_counts.values, color="orange")
@@ -617,7 +626,7 @@ class DataMiner:
         plt.ylabel("Number of Transactions")
         plt.xticks(fraud_cluster_counts.index)
         plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.show()
+        # plt.show()
 
         predict_cluster_labels = kmeans.predict(predict_department_df)
         predict_department_df["Predicted_Cluster"] = predict_cluster_labels

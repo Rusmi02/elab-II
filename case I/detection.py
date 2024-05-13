@@ -218,14 +218,14 @@ class FraudDetector:
             if fraud_score >= score_threshold:
                 flagged_transactions.append((idx, transaction))
 
-        # plot_rules = data_miner.mine_association_rules(support=0.1, lift=1)
-        # plt.figure(figsize=(10, 6))
-        # plt.scatter(plot_rules["support"], plot_rules["lift"], color="blue", alpha=0.5)
-        # plt.xlabel("Support")
-        # plt.ylabel("Lift")
-        # plt.title("Association Rules: Support vs. Lift")
-        # plt.grid(True)
-        # plt.tight_layout()
+        plot_rules = data_miner.mine_association_rules(support=0.1, lift=1)
+        plt.figure(figsize=(10, 6))
+        plt.scatter(plot_rules["support"], plot_rules["lift"], color="blue", alpha=0.5)
+        plt.xlabel("Support")
+        plt.ylabel("Lift")
+        plt.title("Association Rules: Support vs. Lift")
+        plt.grid(True)
+        plt.tight_layout()
 
         time_values = [
             time for transaction in test_transactions for _, time, _ in transaction
@@ -315,7 +315,7 @@ if __name__ == "__main__":
     fraud_detector = FraudDetector(data_miner)
 
     test_transactions, transaction_ids = fraud_detector.load_transactions(
-        "case I/case51.csv"
+        "case I/case57.csv"
     )
     fraud_detector.cluster_transactions(test_transactions, transaction_ids)
     (
