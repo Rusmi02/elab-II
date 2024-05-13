@@ -5,6 +5,7 @@ import pandas as pd
 from project import DataMiner
 from scipy import stats
 from sklearn.metrics import pairwise_distances_argmin_min
+from collections import defaultdict
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -36,8 +37,8 @@ class FraudDetector:
 
             return test_transactions, transaction_ids
 
-    def detect_fraud(self, test_transactions, transaction_ids, score_threshold):
-        flagged_transactions = []
+    def cluster_transactions(self, test_transactions, transaction_ids):
+        transaction_in_multiple_clusters = defaultdict(int)
 
         # CLUSTERING BASED ON DEPARTMENTS VISITED
         prediction_department_counts = {department: [] for department in range(1, 19)}
@@ -52,20 +53,11 @@ class FraudDetector:
         prediction_department_df = pd.DataFrame(
             prediction_department_counts, index=transaction_ids
         )
-
-        fraud_cluster_ids = data_miner.department_clusters(prediction_department_df)
-        print("CLUSTERING BASED ON DEPARTMENTS VISITED")
-        if len(fraud_cluster_ids) < 150:
-            print(f"{len(fraud_cluster_ids)}")
-            for transaction_id in fraud_cluster_ids:
-                transaction_number = transaction_id.split()[1]
-                print(f"{transaction_number}")
-        elif len(fraud_cluster_ids) > 150:
-            random_selected_transactions = random.sample(fraud_cluster_ids, 150)
-            print(f"{len(random_selected_transactions)} / {len(fraud_cluster_ids)}")
-            for transaction_id in random_selected_transactions:
-                transaction_number = transaction_id.split()[1]
-                print(f"{transaction_number}")
+        fraud_cluster_ids_departments = data_miner.department_clusters(
+            prediction_department_df
+        )
+        for transaction_id in fraud_cluster_ids_departments:
+            transaction_in_multiple_clusters[transaction_id] += 1
 
         # CLUSTERING BASED ON TIME SPENT AT DEPARTMENTS
         prediction_department_times = {department: [] for department in range(1, 19)}
@@ -80,23 +72,16 @@ class FraudDetector:
         prediction_department_times_df = pd.DataFrame(
             prediction_department_times, index=transaction_ids
         )
-
-        fraud_cluster_ids = data_miner.time_clusters(prediction_department_times_df)
-        print("CLUSTERING BASED ON TIME SPENT AT DEPARTMENTS")
-        if len(fraud_cluster_ids) < 150:
-            print(f"{len(fraud_cluster_ids)}")
-            for transaction_id in fraud_cluster_ids:
-                transaction_number = transaction_id.split()[1]
-                print(f"{transaction_number}")
-        elif len(fraud_cluster_ids) > 150:
-            random_selected_transactions = random.sample(fraud_cluster_ids, 150)
-            print(f"{len(random_selected_transactions)} / {len(fraud_cluster_ids)}")
-            for transaction_id in random_selected_transactions:
-                transaction_number = transaction_id.split()[1]
-                print(f"{transaction_number}")
+        fraud_cluster_ids_times = data_miner.time_clusters(
+            prediction_department_times_df
+        )
+        for transaction_id in fraud_cluster_ids_times:
+            transaction_in_multiple_clusters[transaction_id] += 1
 
         # CLUSTERING BASED ON MONEY SPENT AT DEPARTMENTS
-        prediction_department_spendings = {department: [] for department in range(1, 19)}
+        prediction_department_spendings = {
+            department: [] for department in range(1, 19)
+        }
         for idx, transaction in zip(transaction_ids, test_transactions):
             money_spent_per_department = {department: 0 for department in range(1, 19)}
             for department, _, money_spent in transaction:
@@ -108,20 +93,35 @@ class FraudDetector:
         prediction_department_spendings_df = pd.DataFrame(
             prediction_department_spendings, index=transaction_ids
         )
+        fraud_cluster_ids_spending = data_miner.spending_clusters(
+            prediction_department_spendings_df
+        )
+        for transaction_id in fraud_cluster_ids_spending:
+            transaction_in_multiple_clusters[transaction_id] += 1
 
-        fraud_cluster_ids = data_miner.spending_clusters(prediction_department_spendings_df)
-        print("CLUSTERING BASED ON MONEY SPENT AT DEPARTMENTS")
-        if len(fraud_cluster_ids) < 150:
-            print(f"{len(fraud_cluster_ids)}")
-            for transaction_id in fraud_cluster_ids:
+        flagged_transactions_clusters = []
+        for transaction_id, count in transaction_in_multiple_clusters.items():
+            if count >= 2:
+                flagged_transactions_clusters.append(transaction_id)
+
+        if len(flagged_transactions_clusters) < 150:
+            print(f"{len(flagged_transactions_clusters)}")
+            for transaction_id in flagged_transactions_clusters:
                 transaction_number = transaction_id.split()[1]
                 print(f"{transaction_number}")
-        elif len(fraud_cluster_ids) > 150:
-            random_selected_transactions = random.sample(fraud_cluster_ids, 150)
-            print(f"{len(random_selected_transactions)} / {len(fraud_cluster_ids)}")
+        elif len(flagged_transactions_clusters) > 150:
+            random_selected_transactions = random.sample(
+                flagged_transactions_clusters, 150
+            )
+            print(
+                f"{len(random_selected_transactions)} / {len(flagged_transactions_clusters)}"
+            )
             for transaction_id in random_selected_transactions:
                 transaction_number = transaction_id.split()[1]
                 print(f"{transaction_number}")
+
+    def detect_fraud(self, test_transactions, transaction_ids, score_threshold):
+        flagged_transactions = []
 
         # MINE ASSOCIATION RULES
         sorted_rules = data_miner.mine_association_rules(support=0.2, lift=1.5)
@@ -218,14 +218,14 @@ class FraudDetector:
             if fraud_score >= score_threshold:
                 flagged_transactions.append((idx, transaction))
 
-        plot_rules = data_miner.mine_association_rules(support=0.1, lift=1)
-        plt.figure(figsize=(10, 6))
-        plt.scatter(plot_rules["support"], plot_rules["lift"], color="blue", alpha=0.5)
-        plt.xlabel("Support")
-        plt.ylabel("Lift")
-        plt.title("Association Rules: Support vs. Lift")
-        plt.grid(True)
-        plt.tight_layout()
+        # plot_rules = data_miner.mine_association_rules(support=0.1, lift=1)
+        # plt.figure(figsize=(10, 6))
+        # plt.scatter(plot_rules["support"], plot_rules["lift"], color="blue", alpha=0.5)
+        # plt.xlabel("Support")
+        # plt.ylabel("Lift")
+        # plt.title("Association Rules: Support vs. Lift")
+        # plt.grid(True)
+        # plt.tight_layout()
 
         time_values = [
             time for transaction in test_transactions for _, time, _ in transaction
@@ -315,8 +315,9 @@ if __name__ == "__main__":
     fraud_detector = FraudDetector(data_miner)
 
     test_transactions, transaction_ids = fraud_detector.load_transactions(
-        "case I/case48.csv"
+        "case I/case51.csv"
     )
+    fraud_detector.cluster_transactions(test_transactions, transaction_ids)
     (
         flagged_transactions,
         total_ar_score,
