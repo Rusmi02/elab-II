@@ -315,7 +315,7 @@ if __name__ == "__main__":
     fraud_detector = FraudDetector(data_miner)
 
     test_transactions, transaction_ids = fraud_detector.load_transactions(
-        "case I/case57.csv"
+        "case I/case59.csv"
     )
     fraud_detector.cluster_transactions(test_transactions, transaction_ids)
     (
