@@ -9,6 +9,8 @@ from prefixspan import PrefixSpan
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin_min
 
+# ELAB CASE 1 GROUP 02B
+# Github Copilot was used for sections of repetitive code and Black Formatter was used for code formatting.
 
 class DataMiner:
     def __init__(self, data_file):

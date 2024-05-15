@@ -9,6 +9,10 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# ELAB CASE 1 GROUP 02B
+# Github Copilot was used for sections of repetitive code and Black Formatter was used for code formatting.
+
+# !!! WETRANSFER LINK FOR sequential_rules.pkl: https://we.tl/t-J45R93Jxp0
 
 class FraudDetector:
     def __init__(self, data_miner):
@@ -315,7 +319,7 @@ if __name__ == "__main__":
     fraud_detector = FraudDetector(data_miner)
 
     test_transactions, transaction_ids = fraud_detector.load_transactions(
-        "case I/case59.csv"
+        "case I/X.csv"
     )
     fraud_detector.cluster_transactions(test_transactions, transaction_ids)
     (
