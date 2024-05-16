@@ -3,6 +3,7 @@ import random
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.patches as patches
 from math import sqrt
 
 
@@ -234,6 +235,21 @@ def plot_graph(G, nodes, edges, service_points, squares):
         edge_color="gray",
         arrowsize=10,
     )
+
+    for square_id, square_data in squares.items():
+        x = square_data["x"]
+        y = square_data["y"]
+        plt.gca().add_patch(
+            plt.Rectangle(
+                (x, y),
+                5000,
+                5000,
+                fill=True,
+                edgecolor="black",
+                linewidth=1,
+                alpha=0.5,
+            )
+        )
 
     plt.title("Road Network with Squares")
     plt.show()
