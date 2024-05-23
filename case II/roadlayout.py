@@ -199,6 +199,15 @@ def build_graph(nodes, edges, service_points):
     return G
 
 
+def calculate_distance_to_nearest_service_point(G, node_id):
+    shortest_path_lengths = nx.single_source_dijkstra_path_length(
+        G, node_id, weight="weight"
+    )
+    nearest_sp = G.nodes[node_id]["nearest_service_point"]
+    distance_to_sp = shortest_path_lengths.get(nearest_sp, float("inf"))
+    return distance_to_sp
+
+
 def plot_base_graph(G, nodes, edges, service_points):
     node_positions = nx.get_node_attributes(G, "pos")
 
@@ -248,17 +257,18 @@ def plot_squares(squares, parameter):
 
     square_patches = []
     for square_id, square_data in squares.items():
-        if square_data[parameter] == "NA":
-            continue
         x = square_data["x"]
         y = square_data["y"]
         value = square_data[parameter]
-        color = cmap(norm(value))
+        if value == "NA":
+            color = "lightgray"
+        else:
+            color = cmap(norm(float(value)))
         square_patches.append(
             patches.Rectangle(
                 (x, y),
-                5000,
-                5000,
+                7000,
+                4500,
                 linewidth=1,
                 edgecolor=color,
                 facecolor=color,
@@ -287,6 +297,12 @@ def main():
     G = build_graph(nodes, edges, service_points)
     plot_base_graph(G, nodes, edges, service_points)
     plot_squares(squares, "population")
+
+    node_id = 5515
+    distance_to_sp = calculate_distance_to_nearest_service_point(G, node_id)
+    print(
+        f"Distance from node {node_id} to its nearest service point: {distance_to_sp:.2f}m"
+    )
 
 
 if __name__ == "__main__":
