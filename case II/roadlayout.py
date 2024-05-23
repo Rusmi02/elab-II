@@ -184,28 +184,22 @@ def build_graph(nodes, edges, service_points):
         G.add_node(sp_id, pos=(data["x"], data["y"]))
 
     for edge_id, data in edges.items():
-        G.add_edge(data["v1"], data["v2"])
+        G.add_edge(data["v1"], data["v2"], weight=data["dist"])
 
     for node_id, node_data in nodes.items():
-        nearest_sp = None
-        min_distance = float("inf")
-        for sp_id, sp_data in service_points.items():
-            dist = calculate_distance(
-                (node_data["x"], node_data["y"]), (sp_data["x"], sp_data["y"])
-            )
-            if dist < min_distance:
-                min_distance = dist
-                nearest_sp = sp_id
+        shortest_path_lengths = nx.single_source_dijkstra_path_length(
+            G, node_id, weight="weight"
+        )
+        nearest_sp = min(
+            service_points.keys(),
+            key=lambda sp_id: shortest_path_lengths.get(sp_id, float("inf")),
+        )
         G.nodes[node_id]["nearest_service_point"] = nearest_sp
 
     return G
 
 
-def calculate_distance(point1, point2):
-    return sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
-
-
-def plot_graph(G, nodes, edges, service_points, squares):
+def plot_base_graph(G, nodes, edges, service_points):
     node_positions = nx.get_node_attributes(G, "pos")
 
     all_colors = list(mcolors.CSS4_COLORS.values())
@@ -224,7 +218,7 @@ def plot_graph(G, nodes, edges, service_points, squares):
             nearest_sp = G.nodes[node_id].get("nearest_service_point")
             node_colors.append(service_point_color_map.get(nearest_sp, "skyblue"))
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 8))
     node_sizes = [100 if node_id in service_points else 2 for node_id in G.nodes()]
     nx.draw(
         G,
@@ -236,22 +230,51 @@ def plot_graph(G, nodes, edges, service_points, squares):
         arrowsize=10,
     )
 
+
+def plot_squares(squares, parameter):
+    max_value = max(
+        square_data[parameter]
+        for square_data in squares.values()
+        if square_data[parameter] != "NA"
+    )
+    min_value = min(
+        square_data[parameter]
+        for square_data in squares.values()
+        if square_data[parameter] != "NA"
+    )
+
+    norm = mcolors.Normalize(vmin=min_value, vmax=max_value)
+    cmap = plt.cm.viridis
+
+    square_patches = []
     for square_id, square_data in squares.items():
+        if square_data[parameter] == "NA":
+            continue
         x = square_data["x"]
         y = square_data["y"]
-        plt.gca().add_patch(
-            plt.Rectangle(
+        value = square_data[parameter]
+        color = cmap(norm(value))
+        square_patches.append(
+            patches.Rectangle(
                 (x, y),
                 5000,
                 5000,
-                fill=True,
-                edgecolor="black",
                 linewidth=1,
+                edgecolor=color,
+                facecolor=color,
                 alpha=0.5,
             )
         )
 
-    plt.title("Road Network with Squares")
+    ax = plt.gca()
+    for patch in square_patches:
+        ax.add_patch(patch)
+
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    plt.colorbar(sm, label=parameter, ax=ax)
+
+    plt.title("Road Network with Squares Colored by Parameter")
     plt.show()
 
 
@@ -262,7 +285,8 @@ def main():
     squares = read_squares("case II/squares.csv")
 
     G = build_graph(nodes, edges, service_points)
-    plot_graph(G, nodes, edges, service_points, squares)
+    plot_base_graph(G, nodes, edges, service_points)
+    plot_squares(squares, "population")
 
 
 if __name__ == "__main__":
