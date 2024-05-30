@@ -175,7 +175,7 @@ def read_squares(file_path):
 
 
 def build_graph(nodes, edges, service_points):
-    G = nx.Graph()
+    G = nx.DiGraph()
 
     for node_id, data in nodes.items():
         G.add_node(node_id, pos=(data["x"], data["y"]))
@@ -184,7 +184,11 @@ def build_graph(nodes, edges, service_points):
         G.add_node(sp_id, pos=(data["x"], data["y"]))
 
     for edge_id, data in edges.items():
-        G.add_edge(data["v1"], data["v2"], weight=data["dist"])
+        if data["directed"] is True:
+            G.add_edge(data["v1"], data["v2"], weight=data["dist"])
+        else:
+            G.add_edge(data["v1"], data["v2"], weight=data["dist"])
+            G.add_edge(data["v2"], data["v1"], weight=data["dist"])
 
     for node_id, node_data in nodes.items():
         shortest_path_lengths = nx.single_source_dijkstra_path_length(
@@ -236,7 +240,7 @@ def plot_base_graph(G, nodes, edges, service_points):
         node_size=node_sizes,
         node_color=node_colors,
         edge_color="gray",
-        arrowsize=10,
+        arrows=False,
     )
 
 
