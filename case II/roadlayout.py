@@ -45,7 +45,7 @@ def read_edges(file_path):
                 "v1": int(v1),
                 "v2": int(v2),
                 "dist": float(dist.replace(",", ".")),
-                "directed": bool(directed),
+                "directed": directed.lower() == "true",
                 "road_type": str(road_type),
                 "name": str(name),
                 "max_speed": int(max_speed),
@@ -184,7 +184,7 @@ def build_graph(nodes, edges, service_points):
         G.add_node(sp_id, pos=(data["x"], data["y"]))
 
     for edge_id, data in edges.items():
-        if data["directed"] is True:
+        if data["directed"] == "true":
             G.add_edge(data["v1"], data["v2"], weight=data["dist"])
         else:
             G.add_edge(data["v1"], data["v2"], weight=data["dist"])
@@ -243,31 +243,93 @@ def plot_base_graph(G, nodes, edges, service_points):
         arrows=False,
     )
 
+    plt.title("Road Network with Service Points Colored by Nearest Service Point")
+    plt.show()
 
-def plot_squares(squares, parameter):
-    max_value = max(
-        square_data[parameter]
-        for square_data in squares.values()
-        if square_data[parameter] != "NA"
-    )
-    min_value = min(
-        square_data[parameter]
-        for square_data in squares.values()
-        if square_data[parameter] != "NA"
+
+def calculate_deliveries_to_pickups_ratio(service_points):
+    ratio = {}
+    for sp_id, sp_data in service_points.items():
+        if sp_data["total_pickups"] != 0:
+            ratio[sp_id] = sp_data["total_deliveries"] / sp_data["total_pickups"]
+        else:
+            ratio[sp_id] = float("inf")
+    return ratio
+
+
+def plot_combined_graph(G, nodes, edges, service_points, ratio, squares, parameter):
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as mcolors
+    import networkx as nx
+    import matplotlib.patches as patches
+
+    node_positions = nx.get_node_attributes(G, "pos")
+
+    max_ratio = max(ratio.values())
+    min_ratio = min(ratio.values())
+    norm_ratio = mcolors.Normalize(vmin=min_ratio, vmax=max_ratio)
+    cmap_ratio = plt.cm.viridis
+
+    service_point_color_map = {
+        sp_id: cmap_ratio(norm_ratio(value)) for sp_id, value in ratio.items()
+    }
+
+    node_colors = []
+    for node_id in G.nodes():
+        if node_id in service_points:
+            node_colors.append(service_point_color_map[node_id])
+        else:
+            nearest_sp = G.nodes[node_id].get("nearest_service_point")
+            node_colors.append(service_point_color_map.get(nearest_sp, "skyblue"))
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    node_sizes = [100 if node_id in service_points else 2 for node_id in G.nodes()]
+    nx.draw(
+        G,
+        pos=node_positions,
+        with_labels=False,
+        node_size=node_sizes,
+        node_color=node_colors,
+        edge_color="gray",
+        arrows=False,
+        ax=ax,
     )
 
-    norm = mcolors.Normalize(vmin=min_value, vmax=max_value)
-    cmap = plt.cm.viridis
+    sm_ratio = plt.cm.ScalarMappable(cmap=cmap_ratio, norm=norm_ratio)
+    sm_ratio.set_array([])
+    plt.colorbar(sm_ratio, ax=ax, label="Deliveries to Pickups Ratio")
+
+    max_value = float("-inf")
+    min_value = float("inf")
+
+    for square_data in squares.values():
+        if square_data[parameter] != "NA" and square_data.get("population", 0) > 0:
+            percentage_value = (
+                square_data[parameter] / square_data["population"]
+            ) * 100
+            if percentage_value > max_value:
+                max_value = percentage_value
+            if percentage_value < min_value:
+                min_value = percentage_value
+
+    norm_square = mcolors.Normalize(vmin=min_value, vmax=max_value)
+    cmap_square = plt.cm.viridis
 
     square_patches = []
     for square_id, square_data in squares.items():
-        x = square_data["x"]
-        y = square_data["y"]
-        value = square_data[parameter]
-        if value == "NA":
+        x_center = square_data["x"]
+        y_center = square_data["y"]
+        if square_data[parameter] == "NA" or square_data.get("population", 0) == 0:
             color = "lightgray"
         else:
-            color = cmap(norm(float(value)))
+            percentage_value = (
+                square_data[parameter] / square_data["population"]
+            ) * 100
+            color = cmap_square(norm_square(percentage_value))
+
+        x = x_center - 7000 / 2
+        y = y_center - 4500 / 2
+
         square_patches.append(
             patches.Rectangle(
                 (x, y),
@@ -280,15 +342,16 @@ def plot_squares(squares, parameter):
             )
         )
 
-    ax = plt.gca()
     for patch in square_patches:
         ax.add_patch(patch)
 
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    plt.colorbar(sm, label=parameter, ax=ax)
+    sm_square = plt.cm.ScalarMappable(cmap=cmap_square, norm=norm_square)
+    sm_square.set_array([])
+    plt.colorbar(sm_square, ax=ax, label=f"{parameter} (% of Population)")
 
-    plt.title("Road Network with Squares Colored by Parameter")
+    plt.title(
+        "Road Network with Service Points Ratio and Squares Colored by Parameter (%)"
+    )
     plt.show()
 
 
@@ -300,13 +363,8 @@ def main():
 
     G = build_graph(nodes, edges, service_points)
     plot_base_graph(G, nodes, edges, service_points)
-    plot_squares(squares, "population")
-
-    node_id = 5515
-    distance_to_sp = calculate_distance_to_nearest_service_point(G, node_id)
-    print(
-        f"Distance from node {node_id} to its nearest service point: {distance_to_sp:.2f}m"
-    )
+    ratio = calculate_deliveries_to_pickups_ratio(service_points)
+    plot_combined_graph(G, nodes, edges, service_points, ratio, squares, "male")
 
 
 if __name__ == "__main__":
