@@ -299,18 +299,16 @@ def plot_combined_graph(G, nodes, edges, service_points, ratio, squares, paramet
     sm_ratio.set_array([])
     plt.colorbar(sm_ratio, ax=ax, label="Deliveries to Pickups Ratio")
 
-    max_value = float("-inf")
-    min_value = float("inf")
-
-    for square_data in squares.values():
-        if square_data[parameter] != "NA" and square_data.get("population", 0) > 0:
-            percentage_value = (
-                square_data[parameter] / square_data["population"]
-            ) * 100
-            if percentage_value > max_value:
-                max_value = percentage_value
-            if percentage_value < min_value:
-                min_value = percentage_value
+    max_value = max(
+        square_data[parameter]
+        for square_data in squares.values()
+        if square_data[parameter] != "NA"
+    )
+    min_value = min(
+        square_data[parameter]
+        for square_data in squares.values()
+        if square_data[parameter] != "NA"
+    )
 
     norm_square = mcolors.Normalize(vmin=min_value, vmax=max_value)
     cmap_square = plt.cm.viridis
@@ -319,13 +317,11 @@ def plot_combined_graph(G, nodes, edges, service_points, ratio, squares, paramet
     for square_id, square_data in squares.items():
         x_center = square_data["x"]
         y_center = square_data["y"]
-        if square_data[parameter] == "NA" or square_data.get("population", 0) == 0:
+        value = square_data[parameter]
+        if value == "NA":
             color = "lightgray"
         else:
-            percentage_value = (
-                square_data[parameter] / square_data["population"]
-            ) * 100
-            color = cmap_square(norm_square(percentage_value))
+            color = cmap_square(norm_square(float(value)))
 
         x = x_center - 7000 / 2
         y = y_center - 4500 / 2
@@ -347,7 +343,7 @@ def plot_combined_graph(G, nodes, edges, service_points, ratio, squares, paramet
 
     sm_square = plt.cm.ScalarMappable(cmap=cmap_square, norm=norm_square)
     sm_square.set_array([])
-    plt.colorbar(sm_square, ax=ax, label=f"{parameter} (% of Population)")
+    plt.colorbar(sm_square, ax=ax, label=f"{parameter}")
 
     plt.title(
         "Road Network with Service Points Ratio and Squares Colored by Parameter (%)"
@@ -364,7 +360,15 @@ def main():
     G = build_graph(nodes, edges, service_points)
     plot_base_graph(G, nodes, edges, service_points)
     ratio = calculate_deliveries_to_pickups_ratio(service_points)
-    plot_combined_graph(G, nodes, edges, service_points, ratio, squares, "male")
+    plot_combined_graph(
+        G,
+        nodes,
+        edges,
+        service_points,
+        ratio,
+        squares,
+        "home_ownership_percent",
+    )
 
 
 if __name__ == "__main__":
