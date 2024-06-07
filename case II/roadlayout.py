@@ -354,7 +354,7 @@ def plot_combined_graph(G, nodes, edges, service_points, ratio, squares, paramet
 def main():
     nodes = read_nodes("case II/nodes.csv")
     edges = read_edges("case II/edges.csv")
-    service_points = read_service_points("case II/service_points.csv")
+    service_points = read_service_points("case II/service_points_practical_25.csv")
     squares = read_squares("case II/squares.csv")
 
     G = build_graph(nodes, edges, service_points)

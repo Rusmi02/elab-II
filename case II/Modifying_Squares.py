@@ -1,34 +1,12 @@
 import pandas as pd
-import numpy as np
 
 # Read the data from the CSV file
-df = pd.read_csv('usable_squares.csv', sep=',')
+df = pd.read_csv('squares.csv', sep=';')
 
 
 #here just assuming the population is 3 (since less than 5 not reported, we assume a typical dutch household
-# Update population of 3
-# Update rows where Population is 2
-df.loc[df['Population'] == 2, 'Population'] = 3
+df['Population'] = df['Population'].fillna(3)
 
-# Update relevant columns where Population is now 3
-df.loc[df['Population'] == 3, 'Households'] = 1
-df.loc[df['Population'] == 3, 'Age0-14'] = 1
-df.loc[df['Population'] == 3, 'Age25-44'] = 2
-df.loc[df['Population'] == 3, 'Houses'] = 1
-df.loc[df['Population'] == 3, 'Two-parent households'] = 1
-
-# Randomly add 1 male and 2 females, or 2 males and 1 female
-def add_gender_distribution(row):
-    if row['Population'] == 3:
-        if np.random.rand() > 0.5:
-            row['Male'] = 1
-            row['Female'] = 2
-        else:
-            row['Male'] = 2
-            row['Female'] = 1
-    return row
-
-df = df.apply(add_gender_distribution, axis=1)
 
 # List of columns to replace NA with 0
 columns_to_fill = [
